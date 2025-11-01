@@ -32,8 +32,10 @@ class TaskScheduler:
             return f"'{deleted.title}' completed. {len(self.queue)} tasks remaining."
 
     def view_all_tasks(self):
-        pass
-
+        tasks = []
+        for i in self.queue:
+            tasks.append(i)
+        return tasks
 
 scheduler = TaskScheduler([])
 
@@ -63,20 +65,40 @@ def add_test():
         4
         )
     print(f"Task successfully added: {scheduler.queue[len(scheduler.queue)-1]}") 
+    scheduler.add_task(
+        "Go get groceries", 
+        "Buy milk, eggs, and bread",
+        "11/7/25",
+        5
+        )
+    print(f"Task successfully added: {scheduler.queue[len(scheduler.queue)-1]}") 
 
 def view_next_test():
     print("=== Test: View Next Task ===")
     next_task = scheduler.view_next_task()
     print(next_task)
-    
+
 def complete_task():
     print("=== Test: Complete Task ===")
     result = scheduler.complete_task()
     print(result)
+
+def view_all_test():
+    print("=== Test: View All Tasks ===")
+    all_tasks = scheduler.view_all_tasks()
+    if not all_tasks:
+        print("No tasks in the queue.")
+        return
+    print("[")
+    for i, t in enumerate(all_tasks): # t is there for the task and the i for index
+        suffix = "," if i < len(all_tasks) - 1 else "" # Add a comma except for the last item
+        print(f"    {t}{suffix}") # Indent for readability
+    print("]")
 
 task_test() # Make a test instance that shouldn't appear in the actual queue
 add_test() # Use the add function for automation in same queue
 view_next_test() # Look at task[0]
 complete_task() # Complete task[0]
 view_next_test() # Look at task[0] again(should be different now)
+view_all_test() # View all tasks in the queue
     
