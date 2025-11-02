@@ -1,4 +1,6 @@
 from collections import deque 
+import os
+
 # An installation optimized to handle double-ended queues instantly
 class Task:
     def __init__(self, title, description, due_date, priority):
@@ -58,6 +60,22 @@ class TaskScheduler:
         for i in self.queue:
             tasks.append(i)
         return tasks
+
+    def save_to_file(self, filename):
+        """Save notes to a text file."""
+        with open(filename, 'w') as f:
+            for task in self.queue:
+                f.write(f"{task}\n")
+        return "Tasks saved successfully"
+
+    def load_from_file(self, filename):
+        """Load notes from a text file."""
+        if not os.path.exists(filename):
+            return f"{filename} does not exist"
+        with open(filename, 'r') as f:
+            self.queue = [line.strip() for line in f.readlines()]
+        return "Tasks successfully loaded"
+
 
 scheduler = TaskScheduler([])
 
@@ -124,10 +142,22 @@ def view_all_test():
         print(f"    {t}{suffix}") # Indent for readability
     print("]")
 
+def save_tasks_test():
+    print("=== Test: Save Tasks to File ===")
+    result = scheduler.save_to_file("tasks.txt")
+    print(result)
+
+def load_tasks_test():
+    print("=== Test: Load Tasks from File ===")
+    result = scheduler.load_from_file("tasks.txt")
+    print(result)
+
 task_test() # Make a test instance that shouldn't appear in the actual queue
 add_test() # Use the add function for automation in same queue
 view_next_test() # Look at task[0]
 complete_task() # Complete task[0]
 view_next_test() # Look at task[0] again(should be different now)
 view_all_test() # View all tasks in the queue (should be sorted by priority)
-    
+save_tasks_test() # Should return success message
+load_tasks_test() # Should return success message
+view_all_test() # Should return entire list
