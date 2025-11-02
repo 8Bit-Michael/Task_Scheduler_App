@@ -15,8 +15,30 @@ class TaskScheduler:
     def __init__(self, queue):
         self.queue = deque(queue or [])
 
-    def add_task(self, title, description, due_date, priority): # This goes to the back
+    def add_task(self, title, description, due_date, priority):
+        if priority < 1 or priority > 5:
+            # the return in this condition would stop the function
+            return f"Priority must be between 1 and 5."
+        
+        # however if the function has not stopped then we can proceed
         task = Task(title, description, due_date, priority)
+
+        # if queue is empty just add
+        if not self.queue:
+            self.queue.append(task)
+            return 
+        
+        # otherwise use the algorithm to insert based on priority
+        
+        # for the tuple inside of self.queue
+        for idx, existing in enumerate(self.queue):
+            # if the existing task has a lower priority than the new task
+            if existing.priority < priority:
+                # insert the new task before the existing one
+                self.queue.insert(idx, task)
+                return
+
+        # If none are found append at the end
         self.queue.append(task)
 
     def view_next_task(self):
@@ -72,6 +94,13 @@ def add_test():
         5
         )
     print(f"Task successfully added: {scheduler.queue[len(scheduler.queue)-1]}") 
+    scheduler.add_task(
+        "Finish your homework", 
+        "Social Studies worksheet and Math problems",
+        "11/3/25",
+        1
+        )
+    print(f"Task successfully added: {scheduler.queue[len(scheduler.queue)-1]}") 
 
 def view_next_test():
     print("=== Test: View Next Task ===")
@@ -100,5 +129,5 @@ add_test() # Use the add function for automation in same queue
 view_next_test() # Look at task[0]
 complete_task() # Complete task[0]
 view_next_test() # Look at task[0] again(should be different now)
-view_all_test() # View all tasks in the queue
+view_all_test() # View all tasks in the queue (should be sorted by priority)
     
