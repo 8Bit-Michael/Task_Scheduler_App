@@ -1,72 +1,84 @@
-from scheduler import TaskScheduler
-from difflib import get_close_matches
+from collections import deque 
+import os
 
-def match_input(user_input, options, cutoff=0.6):
-    return get_close_matches(user_input.lower(), options, n=1, cutoff=cutoff)
+# An installation optimized to handle double-ended queues instantly
+class Task:
+    def __init__(self, title, description, due_date, priority):
+        self.title = title
+        self.description = description
+        self.due_date = due_date
+        self.priority = priority
     
-    
-def main():
-    scheduler = TaskScheduler([])
+    def __repr__(self): 
+        # Makes the code readable and not just an object address, but rather the object of the address
+        return f"({self.title!r}, {self.description!r}, {self.due_date!r}, {self.priority})"
 
-    while True:
-        command = input("""Enter a command:
-        1. Add task
-        2. View next task
-        3. Complete task
-        4. View all tasks
-        5. Save tasks
-        6. Load tasks
-        0. Exit
-        """)
+class TaskScheduler:
+    def __init__(self, queue):
+        self.queue = deque(queue or [])
 
-        # title, description, due_date, priority
-
-        if match_input(command, ['add task', '1']):
-            title = input("Enter your task title: ")
-            description = input("Enter your task description: ")
-            due_date = input("Enter your task due date (MM/DD/YY): ")
-            priority = int(input("Enter your task priority (1-5, 1 is lowest priority): "))
-            result = scheduler.add_task(title, description, due_date, priority)
-            print(result)
+    def add_task(self, title, description, due_date, priority):
+        if priority < 1 or priority > 5:
+            # the return in this condition would stop the function
+            return f"Priority must be between 1 and 5."
         
-        elif match_input(command, ['view next task', '2']):
-            result = scheduler.view_next_task()
-            print(result)
-
-        elif match_input(command, ['complete task', '3']):
-            result = scheduler.complete_task()
-            print(result)
+        if due_date.count('/') != 2:
+            return f"Due date must be in MM/DD/YY format."
         
-        elif match_input(command, ['view all tasks', '4']):
-            result = scheduler.view_all_tasks()
-            print(result)
+        # however if the function has not stopped then we can proceed
+        task = Task(title, description, due_date, priority)
 
-        elif match_input(command, ['save tasks', '5']):
-            filename = input("Enter filename to save tasks: ")
-            result = scheduler.save_to_file(filename)
-            print(result)
+        # if queue is empty just add
+        if not self.queue:
+            self.queue.append(task)
+            return f"'{task.title}' added as the first task."
         
-        elif match_input(command, ['load tasks', '6']):
-            filename = input("Enter filename to load tasks: ")
-            result = scheduler.load_from_file(filename)
-            print(result)
+        # otherwise use the algorithm to insert based on priority
+        
+        # for the tuple inside of self.queue
+        for idx, existing in enumerate(self.queue):
+            # if the existing task has a lower priority than the new task
+            if existing.priority < priority:
+                # insert the new task before the existing one
+                self.queue.insert(idx, task)
+                return f'{task.title} added at position {idx} in the queue.'
 
-        elif match_input(command, ['exit', '0']):
-            print("Exiting the application.")
-            exit(0)
+        # If none are found append at the end
+        self.queue.append(task)
+        return f"{task.title} added at the end of the queue."
 
+    def view_next_task(self):
+        if not self.queue:
+            return f"No tasks in the queue."
+        return f"Head task: {self.queue[0]}"
+
+    def complete_task(self):
+        if not self.queue:
+            return f"No tasks to complete."
         else:
-            matches = match_input(command, 
-            ['add', 'delete', 'undo', 'redo', 'show', 'save', 
-             'load', 'exit', '1', '2', '3', '4', '5', '6', '7', '0'])
-            if matches:
-                command = input(f"Did you mean '{matches[0]}'?")
-                print("Returning to menu...")
-                return
-            else:
-                print("Unknown command. Please try again.")
-                return
+            deleted = self.queue.popleft() # Removes the task at index 0 
+            return f"'{deleted.title}' completed. {len(self.queue)} tasks remaining."
 
+    def view_all_tasks(self):
+        tasks = []
+        if not self.queue:
+            return "No tasks in the queue."
+        else:
+            for i in self.queue:
+                tasks.append(i)
+            return tasks
 
-while __name__ == '__main__':
-    main()
+    def save_to_file(self, filename):
+        """Save notes to a text file."""
+        with open(filename, 'w') as f:
+            for task in self.queue:
+                f.write(f"{task}\n")
+        return "Tasks saved successfully"
+
+    def load_from_file(self, filename):
+        """Load notes from a text file."""
+        if not os.path.exists(filename):
+            return f"{filename} does not exist"
+        with open(filename, 'r') as f:
+            self.queue = [line.strip() for line in f.readlines()]
+        return "Tasks successfully loaded"
